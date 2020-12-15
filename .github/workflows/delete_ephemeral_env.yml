@@ -4,6 +4,13 @@ on:
     branches: [ master ]
     types: [closed]
 
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch'
+        required: true
+        default: ''
+
 env:
   BASE_STACK_NAME: ${{ secrets.BASE_STACK_NAME }}
 
@@ -12,6 +19,11 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
+      - name: Set Branch
+        if: env.BRANCH == ''
+        run: |
+          echo "BRANCH=${GITHUB_HEAD_REF}" >> $GITHUB_ENV
+          echo "Current Branch: $BRANCH"
       - uses: actions/checkout@v2
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -22,8 +34,8 @@ jobs:
       - name: Delete Stacks
         run: |
           BUCKET=$(aws cloudformation describe-stacks \
-            --stack-name "${GITHUB_HEAD_REF#*/}-$BASE_STACK_NAME-StaticSite" \
+            --stack-name "${BRANCH#*/}-$BASE_STACK_NAME-StaticSite" \
             --query 'Stacks[0].Outputs[?OutputKey==`Bucket`].OutputValue' \
             --output text)
           aws s3 rb s3://"$BUCKET" --force
-          aws cloudformation delete-stack --stack-name "${GITHUB_HEAD_REF#*/}-$BASE_STACK_NAME-StaticSite"
+          aws cloudformation delete-stack --stack-name "${BRANCH#*/}-$BASE_STACK_NAME-StaticSite"

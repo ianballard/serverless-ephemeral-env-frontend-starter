@@ -4,17 +4,30 @@ on:
     branches: [ master ]
     types: [opened]
 
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch'
+        required: true
+        default: ''
+
 env:
   DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
   BASE_STACK_NAME: ${{ secrets.BASE_STACK_NAME }}
   EXCLUDE_EPHEMERAL_CDN: ${{ secrets.EXCLUDE_EPHEMERAL_CDN }}
   REUSABLE_CDN: ${{ secrets.REUSABLE_CDN }}
+  BRANCH: ${{ github.event.inputs.branch }}
 
 jobs:
 
   Build-Deploy-Frontend:
     runs-on: ubuntu-latest
     steps:
+      - name: Set Branch
+        if: env.BRANCH == ''
+        run: |
+          echo "BRANCH=${GITHUB_HEAD_REF}" >> $GITHUB_ENV
+          echo "Current Branch: $BRANCH"
       - uses: actions/checkout@v2
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -29,24 +42,24 @@ jobs:
       - name: Build frontend
         run: |
           npm install
-          echo "Getting api stack: ${GITHUB_HEAD_REF#*/}-$BASE_STACK_NAME-API"
+          echo "Getting api stack: ${BRANCH#*/}-$BASE_STACK_NAME-API"
           API_URL=$(aws cloudformation describe-stacks \
-            --stack-name "${GITHUB_HEAD_REF#*/}-$BASE_STACK_NAME-API" \
+            --stack-name "${BRANCH#*/}-$BASE_STACK_NAME-API" \
             --query 'Stacks[0].Outputs[?OutputKey==`ApiURL`].OutputValue' \
             --output text)
           echo "Building frontend with API URL: $API_URL"
-          REACT_APP_BASE_URL="$API_URL" REACT_APP_BRANCH="${GITHUB_HEAD_REF}" npm run-script build
+          REACT_APP_BASE_URL="$API_URL" REACT_APP_BRANCH="${BRANCH}" npm run-script build
       - name: Deploy frontend infra
         run: |
           cd ./infra
           npm install
           sudo npm install -g aws-cdk@1.75.0
           npm run build
-          echo "Deploying Static Site Stack with subdomain: ${GITHUB_HEAD_REF#*/}"
-          cdk diff -c subdomain="${GITHUB_HEAD_REF#*/}" \
+          echo "Deploying Static Site Stack with subdomain: ${BRANCH#*/}"
+          cdk diff -c subdomain="${BRANCH#*/}" \
             -c domain="$DOMAIN_NAME" \
             -c excludeCDN="$EXCLUDE_EPHEMERAL_CDN"
-          cdk deploy -c subdomain="${GITHUB_HEAD_REF#*/}" \
+          cdk deploy -c subdomain="${BRANCH#*/}" \
             -c domain="$DOMAIN_NAME" \
             -c excludeCDN="$EXCLUDE_EPHEMERAL_CDN" \
             --all --require-approval never
@@ -55,7 +68,7 @@ jobs:
         run: |
           aws configure set preview.cloudfront true
           DISTRIBUTION_ID=$(aws cloudformation describe-stacks \
-          --stack-name "${GITHUB_HEAD_REF#*/}-$BASE_STACK_NAME-StaticSite" \
+          --stack-name "${BRANCH#*/}-$BASE_STACK_NAME-StaticSite" \
           --query 'Stacks[0].Outputs[?OutputKey==`DistributionId`].OutputValue' \
           --output text)
           aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
@@ -72,7 +85,7 @@ jobs:
       - name: Deploy frontend static content
         run: |
           BUCKET=$(aws cloudformation describe-stacks \
-            --stack-name "${GITHUB_HEAD_REF#*/}-$BASE_STACK_NAME-StaticSite" \
+            --stack-name "${BRANCH#*/}-$BASE_STACK_NAME-StaticSite" \
             --query 'Stacks[0].Outputs[?OutputKey==`Bucket`].OutputValue' \
             --output text)
           aws s3 sync ./build/ s3://"$BUCKET" --delete --acl public-read
