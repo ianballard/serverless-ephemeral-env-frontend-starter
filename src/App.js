@@ -28,7 +28,7 @@ function App() {
                 <div>Current Branch: {process.env.REACT_APP_BRANCH || 'master'}</div>
 
                 <div>Api Data: {data}</div>
-                <div>Test</div>
+                <div>Test R</div>
 
                 <div>
                     <a href={'about'}>About</a>
