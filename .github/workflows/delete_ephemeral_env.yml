@@ -21,7 +21,6 @@ jobs:
           aws-region: us-east-1
       - name: Delete Stacks
         run: |
-          aws cloudformation delete-stack --stack-name "${GITHUB_HEAD_REF#*/}-$BASE_STACK_NAME-API"
           BUCKET=$(aws cloudformation describe-stacks \
             --stack-name "${GITHUB_HEAD_REF#*/}-$BASE_STACK_NAME-StaticSite" \
             --query 'Stacks[0].Outputs[?OutputKey==`Bucket`].OutputValue' \
