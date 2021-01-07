@@ -28,7 +28,6 @@ function App() {
                 <div>Current Branch: {process.env.REACT_APP_BRANCH || 'master'}</div>
 
                 <div>Api Data: {data}</div>
-                <div>Test</div>
 
                 <div>
                     <a href={'about'}>About</a>
@@ -58,9 +57,9 @@ const Home = props => {
 }
 
 const About = props => {
-    return <>About<div>Test About</div></>
+    return <>About<div>About Info</div></>
 }
 
 const Contact = props => {
-    return <>Contact<div>Test About</div></>
+    return <>Contact<div>Contact Info</div></>
 }
