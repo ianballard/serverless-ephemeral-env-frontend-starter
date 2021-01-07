@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+</body>
+<script>
+    (function() {
+
+        const originCookie = document.cookie.match(new RegExp('(^| )origin=([^;]+)'));
+        const originValue = originCookie ? originCookie[2] : null;
+        console.log("Origin currently set to: ", originValue);
+
+        if (!originValue) {
+            const branch = prompt("Please enter the branch you want to test", "")
+                .toLowerCase()
+                .replace('feature', '')
+                .replace('bugfix', '')
+                .replace('hotfix', '')
+                .replace('/', '')
+                .trim()
+
+            if (branch) {
+                console.log("Switching testing environment to: ", branch);
+                document.cookie="origin=" + branch;
+                location.reload();
+            }
+
+        }
+
+    })();
+</script>
+</html>

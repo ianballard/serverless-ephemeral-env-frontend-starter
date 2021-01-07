@@ -32,6 +32,9 @@ jobs:
           API_URL=$(aws cloudformation describe-stacks \
             --stack-name "${GITHUB_HEAD_REF#*/}-$BASE_STACK_NAME-API" \
             --query 'Stacks[0].Outputs[?OutputKey==`ApiURL`].OutputValue' \
+            --output text)|| API_URL=$(aws cloudformation describe-stacks \
+            --stack-name "$BASE_STACK_NAME-API" \
+            --query 'Stacks[0].Outputs[?OutputKey==`ApiURL`].OutputValue' \
             --output text)
           echo "Building frontend with API URL: $API_URL"
           REACT_APP_BASE_URL="$API_URL" REACT_APP_BRANCH="${GITHUB_HEAD_REF}" npm run-script build
