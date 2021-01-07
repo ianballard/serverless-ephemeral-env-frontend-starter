@@ -53,7 +53,7 @@ function App() {
 export default App;
 
 const Home = props => {
-    return <>Welcome to a-1</>
+    return <>Welcome</>
 }
 
 const About = props => {
