@@ -53,7 +53,7 @@ function App() {
 export default App;
 
 const Home = props => {
-    return <>Welcome</>
+    return <>Welcome to my LTL!</>
 }
 
 const About = props => {
